@@ -1,0 +1,14 @@
+[
+  {
+    "username": "pedro",
+    "password": "$2b$08$BormEF6SPEQkbjwM5NnMIOjNvHp2.GXzscOzmVyuSKGI6UPegMytO"
+  },
+  {
+    "username": "alice",
+    "password": "$2b$10$m3WUkwgKT1RD0KjlVAehJeQhsdxs9hclMi7yQSZmiwlnefxBfcsaa"
+  },
+  {
+    "username": "miguel",
+    "password": "$2b$10$0N/gPMg4qgFOyX5bduXzKOfaqGxAWcl1gFqsRf8UsqmbQIGdFKMPC"
+  }
+]

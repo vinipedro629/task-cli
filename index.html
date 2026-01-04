@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Gerenciador de Tarefas</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #fafafa; margin: 0; padding: 0; }
+    .container { max-width: 500px; margin: 40px auto; background: #fff; box-shadow: 0 2px 8px #0002; padding: 30px; border-radius: 8px; }
+    h1 { text-align: center; }
+    form { display: flex; gap: 10px; margin-bottom: 20px; }
+    input[type="text"] { flex: 1; padding: 8px; }
+    button { padding: 8px 14px; cursor: pointer; }
+    .filters { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
+    .filters button.active { background: #2d8cff; color: #fff; }
+    ul { list-style: none; padding: 0; }
+    li { background: #f5f5f5; margin-bottom: 8px; padding: 10px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; }
+    .desc[contenteditable="true"] { border-bottom: 1px dashed #888; }
+    .status-todo { color: #d87f00; }
+    .status-in-progress { color: #0067d8; }
+    .status-done { color: #2ecc40; text-decoration: line-through; }
+    .actions button { margin-left: 4px; }
+    small { display: block; color: #888; font-size: 10px; }
+    .user-actions {
+      display: flex;
+      justify-content: center;
+      gap: 18px;
+      margin-bottom: 18px;
+      font-size: 16px;
+    }
+    .user-actions a {
+      color: #2d8cff;
+      text-decoration: none;
+      font-weight: bold;
+      transition: text-decoration 0.2s;
+    }
+    .user-actions a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Gerenciador de Tarefas</h1>
+    <div id="user-info" style="text-align:right; margin-bottom:10px;"></div>
+    <div class="user-actions">
+      <a href="login.html" id="login-link">Entrar</a>
+      <a href="register.html" id="register-link">Criar nova conta</a>
+      <!-- O botão de logout será inserido via JS se usuário estiver logado -->
+    </div>
+    <form id="task-form">
+      <input type="text" id="task-input" placeholder="Nova tarefa..." required>
+      <button type="submit">Adicionar</button>
+    </form>
+    <div class="filters">
+      <button type="button" data-filter="all" class="active">Todas</button>
+      <button type="button" data-filter="todo">A Fazer</button>
+      <button type="button" data-filter="in-progress">Em Progresso</button>
+      <button type="button" data-filter="done">Concluídas</button>
+    </div>
+    <ul id="task-list"></ul>
+  </div>
+<script>
+// SOLUÇÃO RECOMENDADA: Cada usuário vê apenas suas próprias tarefas (consulte readme).
+
+const usuarioLogado = localStorage.getItem("usuario_logado");
+const LS_KEY = usuarioLogado ? "visual_tasks_v1__" + usuarioLogado : null;
+
+// UTILIDADES
+function loadTasks() {
+  if (!LS_KEY) return []; // sem login, retorna lista vazia
+  return JSON.parse(localStorage.getItem(LS_KEY) || "[]");
+}
+function saveTasks(tasks) {
+  if (!LS_KEY) return;
+  localStorage.setItem(LS_KEY, JSON.stringify(tasks));
+}
+function now() {
+  return new Date().toISOString();
+}
+function getNextId(tasks) {
+  return tasks.length ? Math.max(...tasks.map(t => t.id)) + 1 : 1;
+}
+
+// DOM ELEMENTS
+const form = document.getElementById('task-form');
+const input = document.getElementById('task-input');
+const list = document.getElementById('task-list');
+const filters = document.querySelectorAll('.filters button');
+const userInfoDiv = document.getElementById('user-info');
+const userActionsDiv = document.querySelector('.user-actions');
+const loginLink = document.getElementById('login-link');
+const registerLink = document.getElementById('register-link');
+let currentFilter = "all";
+
+// Exibe nome do usuário logado e botão de logout (instruções do readme)
+if (usuarioLogado) {
+  userInfoDiv.textContent = "Usuário logado: " + usuarioLogado;
+  // Oculta links de login/register e exibe logout
+  if (loginLink) loginLink.style.display = "none";
+  if (registerLink) registerLink.style.display = "none";
+  // Botão de logout
+  const logoutBtn = document.createElement('button');
+  logoutBtn.textContent = "Sair";
+  logoutBtn.style.background = "#e84b4b";
+  logoutBtn.style.color = "#fff";
+  logoutBtn.style.border = "none";
+  logoutBtn.style.padding = "6px 14px";
+  logoutBtn.style.borderRadius = "4px";
+  logoutBtn.style.fontWeight = "bold";
+  logoutBtn.style.cursor = "pointer";
+  logoutBtn.onclick = function() {
+    if (confirm("Deseja sair da sua conta?")) {
+      localStorage.removeItem("usuario_logado");
+      window.location.reload();
+    }
+  };
+  userActionsDiv.appendChild(logoutBtn);
+} else {
+  userInfoDiv.textContent = "";
+  if (loginLink) loginLink.style.display = "";
+  if (registerLink) registerLink.style.display = "";
+}
+
+// Renderiza as tarefas
+function renderTasks() {
+  // Só renderiza tarefas se houver usuário logado
+  if (!usuarioLogado) {
+    list.innerHTML = "<li style='text-align:center;color:#aaa;'>Faça login para ver e criar tarefas.</li>";
+    form.style.display = "none";
+    filters.forEach(btn => btn.style.display = "none");
+    return;
+  } else {
+    form.style.display = "";
+    filters.forEach(btn => btn.style.display = "");
+  }
+
+  const tasks = loadTasks();
+  list.innerHTML = "";
+  let filtered = tasks;
+  if (currentFilter !== "all") {
+    filtered = tasks.filter(t => t.status === currentFilter);
+  }
+  if (filtered.length === 0) {
+    list.innerHTML = "<li style='text-align:center;color:#aaa;'>Sem tarefas</li>";
+    return;
+  }
+  filtered.forEach(task => {
+    const li = document.createElement('li');
+    li.innerHTML = `
+      <span class="desc status-${task.status}" contenteditable="false" title="Clique para editar">${task.description}</span>
+      <div>
+        <small>${task.status.replace("-", " ").toUpperCase()}<br>Criado: ${task.createdAt.split('T')[0]}</small>
+        <div class="actions">
+          ${task.status !== 'in-progress' && task.status !== 'done' ? `<button title="Em progresso" onclick="markProgress(${task.id})">▶️</button>` : ""}
+          ${task.status !== 'done' ? `<button title="Concluída" onclick="markDone(${task.id})">✅</button>` : ""}
+          <button title="Editar" onclick="editTask(${task.id}, this)">✏️</button>
+          <button title="Excluir" onclick="deleteTask(${task.id})">🗑️</button>
+        </div>
+      </div>
+    `;
+    list.appendChild(li);
+  });
+}
+window.markProgress = function(id) {
+  updateStatus(id, 'in-progress');
+};
+window.markDone = function(id) {
+  updateStatus(id, 'done');
+};
+window.deleteTask = function(id) {
+  if (confirm("Deseja realmente deletar esta tarefa?")) {
+    let tasks = loadTasks();
+    tasks = tasks.filter(t => t.id !== id);
+    saveTasks(tasks);
+    renderTasks();
+  }
+};
+window.editTask = function(id, btn) {
+  const li = btn.closest('li');
+  const descEl = li.querySelector('.desc');
+  descEl.contentEditable = "true";
+  descEl.focus();
+  descEl.onblur = function() {
+    descEl.contentEditable = "false";
+    const value = descEl.textContent.trim();
+    if (!value) { alert("Descrição não pode ser vazia!"); renderTasks(); return; }
+    let tasks = loadTasks();
+    let task = tasks.find(t => t.id === id);
+    task.description = value;
+    task.updatedAt = now();
+    saveTasks(tasks);
+    renderTasks();
+  };
+};
+function updateStatus(id, status) {
+  const tasks = loadTasks();
+  const task = tasks.find(t => t.id === id);
+  if (!task) return;
+  task.status = status;
+  task.updatedAt = now();
+  saveTasks(tasks);
+  renderTasks();
+}
+
+// Eventos
+form.onsubmit = e => {
+  e.preventDefault();
+  if (!usuarioLogado) return; // bloqueia cadastro sem login
+  let value = input.value.trim();
+  if (!value) return;
+  let tasks = loadTasks();
+  tasks.push({
+    id: getNextId(tasks),
+    description: value,
+    status: "todo",
+    createdAt: now(),
+    updatedAt: now()
+  });
+  saveTasks(tasks);
+  input.value = "";
+  renderTasks();
+};
+// Filtro de tarefas
+filters.forEach(btn => {
+  btn.onclick = () => {
+    filters.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentFilter = btn.getAttribute('data-filter');
+    renderTasks();
+  };
+});
+// Inicializa
+renderTasks();
+</script>
+</body>
+</html>

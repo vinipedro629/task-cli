@@ -1,0 +1,195 @@
+<!--
+Tela de Cadastro de Usuário - Salve como register.html
+Agora integrado via fetch ao backend real (ver instruções no readme).
+-->
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Criar Conta - Gerenciador de Tarefas</title>
+    <style>
+      body {
+        background: #f7f8fa;
+        min-height: 100vh;
+        font-family: Arial, sans-serif;
+        margin: 0;
+      }
+      .register-container {
+        background: #fff;
+        max-width: 400px;
+        margin: 50px auto 0 auto;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px #0002;
+        padding: 30px 25px 20px 25px;
+      }
+      h2 {
+        text-align: center;
+        margin-bottom: 18px;
+        color: #2d8cff;
+      }
+      label {
+        font-weight: bold;
+        color: #444;
+        display: block;
+        margin-bottom: 6px;
+      }
+      input[type="text"],
+      input[type="password"] {
+        width: 100%;
+        padding: 9px;
+        border-radius: 5px;
+        border: 1px solid #bfc6d1;
+        font-size: 16px;
+        margin-bottom: 16px;
+        box-sizing: border-box;
+        background: #fafbfc;
+        transition: border 0.2s;
+      }
+      input[type="text"]:focus,
+      input[type="password"]:focus {
+        outline: none;
+        border: 1.5px solid #2d8cff;
+        background: #fff;
+      }
+      button {
+        width: 100%;
+        background: #2d8cff;
+        color: #fff;
+        font-size: 17px;
+        border: none;
+        border-radius: 5px;
+        padding: 10px 0;
+        font-weight: bold;
+        cursor: pointer;
+        margin-top: 10px;
+        transition: background 0.18s;
+      }
+      button:hover {
+        background: #0f6ad6;
+      }
+      .form-footer {
+        margin-top: 18px;
+        text-align: center;
+        color: #555;
+        font-size: 15px;
+      }
+      .msg {
+        margin-bottom: 14px;
+        text-align: center;
+        color: #d30030;
+        font-size: 14px;
+        min-height: 18px;
+      }
+      .msg.success {
+        color: #249d13;
+      }
+      @media (max-width: 480px) {
+        .register-container {
+          margin: 24px 8px;
+          padding: 18px 5vw;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="register-container">
+      <h2>Crie sua Conta</h2>
+      <div class="msg" id="msg"></div>
+      <form id="register-form" autocomplete="off">
+        <label for="username">Usuário</label>
+        <input
+          type="text"
+          id="username"
+          name="username"
+          required
+          minlength="3"
+          maxlength="20"
+          placeholder="Seu nome de usuário"
+        />
+
+        <label for="password">Senha</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          required
+          minlength="4"
+          maxlength="40"
+          placeholder="Crie uma senha"
+        />
+
+        <label for="password2">Confirme a Senha</label>
+        <input
+          type="password"
+          id="password2"
+          name="password2"
+          required
+          minlength="4"
+          maxlength="40"
+          placeholder="Repita a senha"
+        />
+
+        <button type="submit">Criar Conta</button>
+      </form>
+      <div class="form-footer">
+        Já tem uma conta? <a href="login.html" style="color: #2d8cff">Entrar</a>
+      </div>
+    </div>
+    <script>
+      // Cadastro real integrado ao backend /api/register
+      // Veja instruções: iniciar backend.js antes (node backend.js)
+      const form = document.getElementById("register-form");
+      const msg = document.getElementById("msg");
+      form.onsubmit = async function (e) {
+        e.preventDefault();
+        msg.textContent = "";
+        msg.classList.remove('success');
+        msg.style.color = ""; // reset for any inline style
+
+        const u = form.username.value.trim();
+        const p = form.password.value;
+        const p2 = form.password2.value;
+
+        if (!u.match(/^[a-zA-Z0-9_]+$/)) {
+          msg.textContent = "Somente letras, números ou _ (underline) no usuário.";
+          return;
+        }
+        if (p !== p2) {
+          msg.textContent = "As senhas não conferem.";
+          return;
+        }
+        if (u.length < 3) {
+          msg.textContent = "Nome de usuário muito curto!";
+          return;
+        }
+        if (p.length < 4) {
+          msg.textContent = "A senha deve ter pelo menos 4 caracteres.";
+          return;
+        }
+
+        msg.textContent = "Aguarde...";
+        try {
+          const response = await fetch("http://localhost:3030/api/register", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username: u, password: p }),
+          });
+          const data = await response.json();
+          if (response.ok) {
+            msg.textContent = data.message || "Conta criada com sucesso!";
+            msg.classList.add("success");
+            // Opcional: redirecionar após criar conta
+            setTimeout(() => {
+              window.location.href = "login.html";
+            }, 1100);
+            form.reset();
+          } else {
+            msg.textContent = (data && data.error) ? data.error : "Falha ao registrar.";
+          }
+        } catch (error) {
+          msg.textContent = "Erro de conexão com o servidor.";
+        }
+      };
+    </script>
+  </body>
+</html>

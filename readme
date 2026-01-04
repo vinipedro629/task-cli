@@ -1,0 +1,23 @@
+🚀 Projeto Completo de Autenticação com Recuperação de Senha (Node.js + Express + Frontend)
+
+Olá, pessoal! Gostaria de compartilhar um projeto que desenvolvi recentemente como estudo prático de autenticação de usuários, incluindo fluxo de recuperação de senha.
+
+O que foi desenvolvido:
+- **Backend em Node.js/Express**: API com endpoints para registro, login e recuperação de senha. Os dados dos usuários são salvos em um arquivo JSON para facilitar a prototipação e testes locais.
+- **Recuperação de senha**: O usuário pode solicitar a redefinição de senha — o backend gera uma senha temporária e a retorna de forma segura.
+- **Frontend simples em HTML/CSS/JS**: Interface moderna com formulários separados para login, cadastro e recuperação de senha, seguindo boas práticas de UX.
+- **Validação e feedback ao usuário**: Mensagens claras para casos de erro ou sucesso em todas as rotas.
+
+💡 Tecnologias Utilizadas:
+- Node.js, Express, bcryptjs para hash de senha e CORS para integração frontend-backend.
+- HTML5 e CSS3 responsivo no frontend.
+- Integração 100% funcional entre backend e frontend para experiência completa.
+
+📚 Para quem é útil?
+- Quem estuda desenvolvimento web e deseja entender na prática como implementar autenticação de usuários e recuperação de senha com Node.js.
+- Professores/mentores buscando um exemplo didático e de fácil execução para alunos (basta rodar `node backend.js` e abrir o HTML!).
+
+O código está bem comentado, facilitando o entendimento para quem está começando. 📝
+
+Curtiu ou achou útil? Deixe um comentário ou compartilhe! 😉
+
